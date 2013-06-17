@@ -95,7 +95,7 @@ echo "Checking out..."
 git checkout --force --quiet -B build origin/"$BRANCH"
 
 echo "Checked out remote branch $BRANCH"
-git log HEAD -1 --date=short --format="%C(yellow)%H%Creset %s%n%Cgreen(%cr%Creset by %C(cyan)%an <%ae>%Cgreen) %C(bold blue)<%ad>%Creset%n%B"
+git --no-pager log HEAD -1 --date=short --format="%C(yellow)%H%Creset %s%n%Cgreen(%cr%Creset by %C(cyan)%an <%ae>%Cgreen) %C(bold blue)<%ad>%Creset%n%B"
 
 $MSBUILD $SOLUTION "//nologo" "//noautoresponse" "//nodeReuse:false" "//verbosity:quiet" "//property:WarningLevel=0" "//property:Configuration=Release"
 
