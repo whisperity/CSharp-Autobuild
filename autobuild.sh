@@ -8,22 +8,6 @@
 ### Usage ###
 # - Put the shell file into an arbitrary folder
 # - Check and set the configuration values below
-# - Set up the build configuration:
-#  - Create an empty .git folder by using `git init .` in a folder
-#  - Add the remote repository to this repo as 'origin' by using
-#    `git remote add origin url_to_repository`
-#    (In case you wish to build from a local repository, you can use
-#    file:///c/path/to/local/repository
-#    as the remote's URL.)
-#  - Pack this folder (with the '.git' inside) into a TAR file
-#    specified in the BuildArchive config variable by running
-#    `tar cf folder clean_build.git.tar`
-#  - Put the resulting TAR file next to this script
-# [OR]
-#  - Use the attached 'clean_build.git.tar' file
-#    Make sure you open it and edit the `.git/config` file to set
-#    the remote URL to pull the source code from!
-#  - Put the given TAR file next to this script
 # - Run the script by specifying which branch to build (e.g.: `AutoBuild.sh master`)
 # - The built executable will be copied to the folder the script is in.
 
@@ -32,9 +16,8 @@
 # It will contain the checked out source code and of course the built executable
 BUILDFOLDER=build
 
-# BuildArchive is the TAR file containing the "pre-build" data
-# In our case, this is a clean, but set up .git folder.
-BUILDARCHIVE=clean_build.git.tar
+# The URL of the remote the source code will be pulled from
+REMOTEURL="file:///c/path/to/repository"
 
 # The ABSOLUTE path to msbuild.exe used to build the solutions
 MSBUILD="/c/Windows/Microsoft.NET/Framework/v4.0.30319/msbuild.exe"
@@ -77,15 +60,15 @@ BRANCH=$1
 
 if [ "$BRANCH" == "" ]
  then
-    echo "You did not specify the branch to build"
-    exit 1
+    BRANCH=master
 fi
 
-# Unpack the prebuild archive
+# Set up the build folder and add the information about the remote
 mkdir $BUILDFOLDER
-tar xf $BUILDARCHIVE -C $BUILDFOLDER
-
 cd $BUILDFOLDER
+git init --quiet .
+git remote add origin "$REMOTEURL"
+
 #echo "Cloning the remote repository..."
 git fetch --quiet --all
 
@@ -118,16 +101,14 @@ if [ $? -ne 0 ]
     echo "BUILD FAILED!"
     cleanup
     exit 3
-else
-    echo "Build successful"
 fi
 
 # Copy the built file to the script's location
 DESCRIBE=`git describe`
 
 cd "$SCRIPTDIRECTORY"
-cp -v $BUILDFOLDER/$BUILTPATH/$BUILTNAME.exe ./"$BUILTNAME"_"$BRANCH"_$DESCRIBE.exe
-#echo "Built file copied"
+cp $BUILDFOLDER/$BUILTPATH/$BUILTNAME.exe ./"$BUILTNAME"_"$BRANCH"_$DESCRIBE.exe
+echo "Built as ${BUILTNAME}_${BRANCH}_${DESCRIBE}.exe"
 
 cleanup
 
