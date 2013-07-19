@@ -28,7 +28,7 @@ cd ..
 
 # Check out the contents of the index (the staged state) to a folder
 # It is important that we are not testing the working directory!
-git checkout-index --all --prefix=precommit_test/
+git checkout-index --all --force --quiet --prefix=precommit_test/
 
 # Execute the tester script
 ./testbuild.sh
