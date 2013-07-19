@@ -49,12 +49,6 @@ if [ -d $BUILDFOLDER ]
     cleanup
 fi
 
-if [ ! -f $BUILDARCHIVE ]
- then
-    echo "The prebuild file $BUILDARCHIVE does not exist"
-    exit 1
-fi
-
 # Of course, we specify what branch we want to build
 BRANCH=$1
 

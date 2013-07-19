@@ -1,0 +1,32 @@
+#!/bin/sh
+# After commit, it executes the automatic builder to create the release of that commit.
+# Put into .git/hooks of the project you want and fill in the configuration variables. 
+
+# Get the current .git directory
+GIT_DIR=$(git rev-parse --git-dir 2>/dev/null)
+if [ -z "$GIT_DIR" ]; then
+   echo >&2 "fatal: post-commit: GIT_DIR not set"
+   exit 1
+fi
+
+### Configuration ###
+# Set the build folder relative to the parent of .git dir
+BUILDFOLDER=builds
+# Name of the builder script
+BUILDSCRIPT=AutoBuild.sh
+
+# Get the branch name for the current commit
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+if [ -z "$BRANCH" ]; then
+   echo >&2 "fatal: post-commit: unable to resolve BRANCH"
+   exit 1
+fi
+
+# Switch to the build directory
+cd "$GIT_DIR"
+cd ..
+cd "$BUILDFOLDER"
+
+# Execute the builder script
+"./$BUILDSCRIPT" "$BRANCH"

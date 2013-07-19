@@ -1,0 +1,47 @@
+#!/bin/sh
+# Put into the .git/hooks folder of the project.
+# This script runs before commit and executes the build tester.
+#
+# If the staged tree fails to build, it automatically prevents the commit.
+
+# Redirect output to stderr.
+exec 1>&2
+
+# Get the current .git directory
+GIT_DIR=$(git rev-parse --git-dir 2>/dev/null)
+if [ -z "$GIT_DIR" ]; then
+   echo >&2 "fatal: post-commit: GIT_DIR not set"
+   exit 1
+fi
+
+# Get the branch name for the current commit
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+if [ -z "$BRANCH" ]; then
+   echo >&2 "fatal: post-commit: unable to resolve BRANCH"
+   exit 1
+fi
+
+# Switch to the build directory
+cd "$GIT_DIR"
+cd ..
+
+# Check out the contents of the index (the staged state) to a folder
+# It is important that we are not testing the working directory!
+git checkout-index --all --prefix=precommit_test/
+
+# Execute the tester script
+./testbuild.sh
+
+if [ $? -ne 0 ]
+ then
+    echo "There was an error building the solution."
+    echo "Refusing to commit in this state!"
+    RESULT=1
+else
+    echo "Build was successful."
+    RESULT=0
+fi
+
+rm -r precommit_test/
+exit $RESULT
