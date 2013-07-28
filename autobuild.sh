@@ -71,19 +71,60 @@ git fetch --quiet --all
 ## then count the number of lines in the output
 if [ `git branch --list --no-color --no-column --remote | grep -w "$BRANCH" | wc | awk {'print $1'}` -eq 0 ]
  then
-    echo "The specified branch '$BRANCH' does not exist on the remote"
-    echo.
-    echo "The following branches are available:"
-    git branch --list --no-color --no-column --remote | sed 's/origin\///'
-    
-    cleanup
-    exit 2
+    if [ `git tag --list | grep -w "$BRANCH" | wc | awk {'print $1'}` -eq 0 ]
+     then
+        echo "The specified branch or tag '$BRANCH' does not exist on the remote"
+        echo.
+        echo "The following branches are available:"
+        git branch --list --no-color --no-column --remote | sed 's/origin\///'
+
+        echo "The following tags are available:"
+        git tag --list | sed 's/^/  /'
+
+        cleanup
+        exit 2
+    fi
 fi
 
 ## Reaching this means the branch exists.
 
 #echo "Checking out..."
-git checkout --force --quiet -B build origin/"$BRANCH"
+CHECKOUT_FAILED=0
+if [ `git branch --list --no-color --no-column --remote | grep -w "$BRANCH" | wc | awk {'print $1'}` -eq 1 ]
+ then
+    # We are checking out a branch
+    # Note that there is "-eq 1" now!
+    git checkout --force --quiet -B build origin/"$BRANCH"
+
+    if [ $? -ne 0 ]
+     then
+       CHECKOUT_FAILED=1
+    fi
+else
+    if [ `git tag --list | grep -w "$BRANCH" | wc | awk {'print $1'}` -eq 1 ]
+     then
+       # We try to check out a tag
+       # Yet again, "-eq 1"!
+
+       git checkout --force --quiet -B build "$BRANCH"
+
+       if [ $? -ne 0 ]
+        then
+          CHECKOUT_FAILED=1
+       fi
+    else
+        # Not a branch, not even a tag.
+        # (We shouldn't have arrived here, but even if we do so, we need to fail.)
+        CHECKOUT_FAILED=1
+    fi
+fi
+
+if [ $CHECKOUT_FAILED -ne 0 ]
+ then
+   echo "Checkout failed"
+   cleanup
+   exit 4
+fi
 
 #echo "Checked out remote branch $BRANCH"
 git --no-pager log HEAD -1 --date=short --format="%C(yellow)%H%Creset %s%n%Cgreen(%cr%Creset by %C(cyan)%an <%ae>%Cgreen) %C(bold blue)<%ad>%Creset%n%B"
